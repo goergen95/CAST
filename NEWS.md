@@ -1,3 +1,7 @@
+# `CAST` dev
+* new features:
+  * calculate risk-coverage curves for selective models (@goergen95)
+
 # `CAST` 1.0.3
 * bug fix: default algorithm for FNN functions changed
 

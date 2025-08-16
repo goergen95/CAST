@@ -139,9 +139,34 @@ print.ffs = function(x, ...){
 
 show.ffs = function(x, ...){
   print.ffs(x)
-
 }
 
 
-
-
+#' @param x An object of type \code{\link{rc}}.
+#' @param ... other arguments.
+#' @name print
+#' @importFrom utils head tail
+#' @export
+print.rc <- function(x, ...) {
+  aurc <- attr(x, "auc")
+  msg <- paste0(
+    sprintf("%s risk\n", aurc["risk"]),
+    sprintf("AUC: %s ", round(aurc["auc_emp"], 4L)),
+    sprintf("Ref-AUC: %s ", round(aurc["auc_ref"], 4L)),
+    sprintf("E-AUC: %s\n", round(aurc["auc_exs"], 4L))
+  )
+  cat(msg)
+  print(
+    head(as.data.frame(x), 3),
+    right = TRUE,
+    row.names = FALSE,
+    ...
+  )
+  cat("                              ...\n")
+  print(
+    tail(as.data.frame(x), 3),
+    right = TRUE,
+    row.names = FALSE,
+    ...
+  )
+}

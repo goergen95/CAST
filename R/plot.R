@@ -534,3 +534,87 @@ plot.errorModel <- function(x, ...){
   return(p)
 
 }
+
+#' @param empirical logical, indicating if the empirical risk-coverage curve
+#'   should be plotted.
+#' @param reference logical, indicating if the reference risk-coverage curve
+#'   should be plotted.
+#' @param excess logical, indicating if the excess (empirical - reference)
+#'   risk-coverage curve should be plotted.
+#' @param digits integer, indicating the number of digits used to print the
+#'   AURC metrics.
+#' @return a ggplot
+#' @name plot
+#' @importFrom stats reshape
+#' @export
+plot.rc <- function(
+  x,
+  empirical = TRUE,
+  reference = TRUE,
+  excess = TRUE,
+  ...,
+  digits = min(4L, getOption("digits"))
+) {
+  coverage <- NULL
+  risk <- NULL
+  curve <- NULL
+
+  # check inputs
+  stopifnot(all(
+    is.logical(empirical),
+    is.logical(reference),
+    is.logical(excess)
+  ))
+  stopifnot(any(empirical, reference, excess))
+
+  # prepare labels and colors
+  selected <- c(empirical, reference, excess)
+  levels <- c("risk", "reference", "excess")[selected]
+  labels <- c("empirical", "reference", "excess")[selected]
+  colors <- c("#1B9E77", "#7570B3", "#D95F02")[selected]
+  auc <- attr(x, "auc")
+  risk <- auc[["risk"]]
+  auc <- auc[, c(FALSE, selected)]
+  names(auc) <- labels
+  auc <- paste(
+    names(auc),
+    round(auc, digits = digits),
+    sep = ": ",
+    collapse = "\n"
+  )
+  auc <- paste0("AUC\n", auc)
+
+  # prepare data for plotting
+  x_long <- subset(x, select = c(coverage, risk, reference, excess))
+  x_long <- reshape(
+    x_long,
+    direction = "long",
+    idvar = "coverage",
+    varying = names(x_long[, -1]),
+    v.names = "risk",
+    timevar = "curve",
+    times = names(x_long[, -1])
+  )
+  x_long["curve"] <- factor(x_long[["curve"]], levels = levels, labels = labels)
+  x_long <- na.omit(x_long)
+  rownames(x_long) <- NULL
+
+  # create plot
+  ggplot(data = x_long, aes(x = coverage, y = risk, color = curve)) +
+    geom_line() +
+    labs(
+      title = paste0(risk, " risk"),
+      x = "Coverage",
+      y = "Risk",
+      color = "Type"
+    ) +
+    scale_colour_manual(values = colors) +
+    annotate(
+      "label",
+      label = auc,
+      x = 0.15,
+      y = quantile(x_long[["risk"]], 0.95)
+    ) +
+    theme_bw() +
+    theme(legend.position = "bottom")
+}

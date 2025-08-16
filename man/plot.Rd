@@ -9,6 +9,7 @@
 \alias{plot.ffs}
 \alias{plot.geodist}
 \alias{plot.errorModel}
+\alias{plot.rc}
 \title{Plot CAST classes}
 \usage{
 \method{plot}{trainDI}(x, ...)
@@ -34,6 +35,15 @@
 \method{plot}{geodist}(x, unit = "m", stat = "density", ...)
 
 \method{plot}{errorModel}(x, ...)
+
+\method{plot}{rc}(
+  x,
+  empirical = TRUE,
+  reference = TRUE,
+  excess = TRUE,
+  ...,
+  digits = min(4L, getOption("digits"))
+)
 }
 \arguments{
 \item{x}{errorModel, see \code{\link{DItoErrormetric}}}
@@ -64,8 +74,22 @@ Alternatively, set to "simple" to have more intuitive labels.}
 \item{pch}{Numeric. Type of point marking the best models}
 
 \item{unit}{character. Only if type=="geo" and only applied to the plot. Supported: "m" or "km".}
+
+\item{empirical}{logical, indicating if the empirical risk-coverage curve
+should be plotted.}
+
+\item{reference}{logical, indicating if the reference risk-coverage curve
+should be plotted.}
+
+\item{excess}{logical, indicating if the excess (empirical - reference)
+risk-coverage curve should be plotted.}
+
+\item{digits}{integer, indicating the number of digits used to print the
+AURC metrics.}
 }
 \value{
+a ggplot
+
 a ggplot
 
 a ggplot

@@ -12,6 +12,7 @@
 \alias{show.knndm}
 \alias{print.ffs}
 \alias{show.ffs}
+\alias{print.rc}
 \title{Print CAST classes}
 \usage{
 \method{print}{trainDI}(x, ...)
@@ -33,9 +34,11 @@ show.knndm(x, ...)
 \method{print}{ffs}(x, ...)
 
 show.ffs(x, ...)
+
+\method{print}{rc}(x, ...)
 }
 \arguments{
-\item{x}{An object of type \emph{ffs}}
+\item{x}{An object of type \code{\link{rc}}.}
 
 \item{...}{other arguments.}
 }
