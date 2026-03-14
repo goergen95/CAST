@@ -107,7 +107,7 @@ trainDI <- function(model = NA,
                     chunk_size = 1000L,
                     verbose = TRUE){
 
-  dist_fin <- match.arg(dist_fun)
+  dist_fun <- match.arg(dist_fun)
   # get parameters if they are not provided in function call-----
   if(is.null(train)){train = aoa_get_train(model)}
   if(length(variables) == 1){
@@ -406,12 +406,19 @@ calc_di <- function(reference, query = NULL, CVtrain, CVtest, dist_fun, ids){
                       k = nrow(reference) - 1, dist_fun = dist_fun,
                       return_distmat = TRUE)
 
-  dist_mat <- mask_dist_mat(dist_mat = dist_mat, ids = ids,
-    CVtest = CVtest, CVtrain = CVtrain)
+  # Average distance is computed over ALL other training points (only self excluded),
+  # NOT masked by CV fold membership. This matches the original behaviour where
+  # trainDist_avrg was computed before fold-masking and is used as a global
+  # normalisation constant (trainDist_avrgmean).
+  dist_mat_avg <- mask_dist_mat(dist_mat = dist_mat, ids = ids)
+  trainDist_avrg <- apply(dist_mat_avg, 1, mean, na.rm = TRUE)
 
-  trainDist_avrg <- apply(dist_mat, 1, mean, na.rm = TRUE)
-  trainDist_min <- apply(dist_mat, 1, min, na.rm = TRUE)
-  trainDist_indices <- apply(dist_mat, 1, function(x) { which(x == min(x, na.rm = TRUE))[1] })
+  # Minimum distance is computed after also masking within-fold CV distances so
+  # that only the nearest cross-validation training partner is considered.
+  dist_mat_min <- mask_dist_mat(dist_mat = dist_mat, ids = ids,
+    CVtest = CVtest, CVtrain = CVtrain)
+  trainDist_min <- apply(dist_mat_min, 1, min, na.rm = TRUE)
+  trainDist_indices <- apply(dist_mat_min, 1, function(x) { which(x == min(x, na.rm = TRUE))[1] })
 
   list(trainDist_min = trainDist_min,
        trainDist_avrg = trainDist_avrg,
