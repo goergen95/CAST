@@ -73,8 +73,8 @@ knndist <- function(
     # requires scaling of the numerical variables, while categorical variables are not scaled.
     num_vars <- vapply(reference, is.numeric, logical(1))
     ref_num <- reference[, num_vars, drop = FALSE]
-    mins <- sapply(ref_num, min, na.rm = TRUE)
-    maxs <- sapply(ref_num, max, na.rm = TRUE)
+    mins <- vapply(ref_num, min, numeric(1), na.rm = TRUE)
+    maxs <- vapply(ref_num, max, numeric(1), na.rm = TRUE)
     range <- maxs - mins
 
     reference[, num_vars] <- as.data.frame(
@@ -83,9 +83,9 @@ knndist <- function(
         2,
         range,
         "/"
-      ),
-      stringsAsFactors = FALSE
+      )
     )
+    reference <- .numeric_fct(reference)
 
     if (!is.null(query)) {
       query[, num_vars] <- as.data.frame(
@@ -94,12 +94,10 @@ knndist <- function(
           2,
           range,
           "/"
-        ),
-        stringsAsFactors = FALSE
+        )
       )
+      query <- .numeric_fct(query)
     }
-    query <- .numeric_fct(query)
-    reference <- .numeric_fct(reference)
   }
 
   if (inherits(query, "numeric")) {
@@ -143,7 +141,7 @@ knndist <- function(
       method = dist_fun
     ))
     if (length(dists) == 1) {
-      return(dists)
+      dists <- matrix(dists, nrow = 1, ncol = 1)
     }
     diag(dists) <- NA # Exclude self-distance
   } else {
@@ -156,28 +154,28 @@ knndist <- function(
 
   if (return_distmat) {
     return(dists)
+  } else {
+    # compute range and sizes
+    range <- c(max(1, 1 + offset), max(k, offset + k))
+    nc <- diff(range) + 1L
+    nr <- nrow(dists)
+
+    # preallocate
+    knn_dists <- matrix(NA_real_, nrow = nr, ncol = nc)
+    knn_indices <- matrix(NA_integer_, nrow = nr, ncol = nc)
+
+    # loop by row (order with NA last so NA self-distances are excluded)
+    for (i in seq_len(nr)) {
+      row <- dists[i, ]
+      o <- order(row, seq_along(row), na.last = TRUE)
+      idx <- o[range[1]:range[2]]
+      knn_indices[i, ] <- as.integer(idx)
+      knn_dists[i, ] <- row[idx]
+    }
+
+    attr(knn_dists, "indices") <- knn_indices
+    return(knn_dists)
   }
-
-  # compute range and sizes
-  range <- c(max(1, 1 + offset), max(k, offset + k))
-  nc <- diff(range) + 1L
-  nr <- nrow(dists)
-
-  # preallocate
-  knn_dists <- matrix(NA_real_, nrow = nr, ncol = nc)
-  knn_indices <- matrix(NA_integer_, nrow = nr, ncol = nc)
-
-  # loop by row (order with NA last so NA self-distances are excluded)
-  for (i in seq_len(nr)) {
-    row <- dists[i, ]
-    o <- order(row, seq_along(row), na.last = TRUE)
-    idx <- o[range[1]:range[2]]
-    knn_indices[i, ] <- as.integer(idx)
-    knn_dists[i, ] <- row[idx]
-  }
-
-  attr(knn_dists, "indices") <- knn_indices
-  knn_dists
 }
 
 
